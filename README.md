@@ -156,7 +156,7 @@ pip install PyQt6
 ## Running BAKO
 
 ```bash
-python BAKO_V2_RELEASE_2_FIXED.py
+python BAKO_V2.py
 ```
 
 ---
