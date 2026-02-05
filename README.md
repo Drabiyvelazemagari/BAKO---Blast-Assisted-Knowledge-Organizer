@@ -133,6 +133,9 @@ If `qcovs` or `qlen` are absent, query coverage filtering cannot be applied.
 ├── RUN_INFO.json
 └── README.txt
 ```
+GUI
+
+<img width="1076" height="813" alt="image" src="https://github.com/user-attachments/assets/bed14a09-7753-41d3-aa13-5bcdcea4dc06" />
 
 ---
 
