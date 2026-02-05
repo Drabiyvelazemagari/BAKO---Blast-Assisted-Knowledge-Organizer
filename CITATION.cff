@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use BAKO in academic work, please cite it as below."
+title: "BAKO — Blast-Assisted Knowledge Organizer"
+type: software
+
+authors:
+  - family-names: Janelidze
+    given-names: Davit
+    alias: Drabiyvelazemagari
+
+version: "2.0.0"
+date-released: 2026-02-05
+
+repository-code: "https://github.com/Drabiyvelazemagari/BAKO---Blast-Assisted-Knowledge-Organizer"
+
+keywords:
+  - bioinformatics
+  - comparative genomics
+  - gene extraction
+  - BLAST
+  - Prodigal
+  - bacterial genomics
+
+license: "Non-commercial academic license"
