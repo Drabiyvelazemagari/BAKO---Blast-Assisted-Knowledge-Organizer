@@ -1,8 +1,6 @@
-# BAKO---Blast-Assisted-Knowledge-Organizer
-
 # BAKO v2.0.0 — Blast-Assisted Knowledge Organizer
 
-**Release file:** `BAKO_V2_RELEASE_2_FIXED.py`  
+**Release file:** `BAKO_V2.py`  
 **Interface:** PyQt6 desktop GUI  
 **Scope:** Gene-of-interest extraction from genome FASTA using external BLAST TSV results
 
