@@ -63,6 +63,11 @@ Optionally, outputs can be further partitioned by replicon type (e.g., chromosom
 
 All outputs are deterministically ordered and generated using atomic write operations to ensure data integrity.
 
+GUI
+
+<img width="1078" height="815" alt="image" src="https://github.com/user-attachments/assets/e4096545-ee45-4331-9534-1c96b749d753" />
+
+
 Implementation
 
 BAKO is implemented in Python (version ≥3.9) with a PyQt6-based graphical user interface for cross-platform usability. External dependencies are limited to Prodigal for gene prediction. The application is designed to operate locally without reliance on cloud services or external pipelines.
@@ -70,40 +75,3 @@ BAKO is implemented in Python (version ≥3.9) with a PyQt6-based graphical user
 Scope and Limitations
 
 BAKO is intended for targeted gene-of-interest extraction and does not perform genome assembly, annotation, or sequence alignment. Its performance depends on the quality of external BLAST results and the consistency between BLAST subject identifiers and genome FASTA headers.
-```
-GUI
-
-<img width="1076" height="813" alt="image" src="https://github.com/user-attachments/assets/bed14a09-7753-41d3-aa13-5bcdcea4dc06" />
-
----
-
-## Installation requirements
-
-### Python
-- Python 3.9+
-
-### Python packages
-- PyQt6
-
-```bash
-pip install PyQt6
-```
-
-### External software
-- **Prodigal** must be installed and available on PATH
-
----
-
-## Running BAKO
-
-```bash
-python BAKO_V2.py
-```
-
----
-
-## Version information
-
-- Application: BAKO
-- Version: 2.0.0
-- Build: PyQt6 cross-platform
