@@ -1,137 +1,75 @@
-# BAKO v2.0.0 — Blast-Assisted Knowledge Organizer
+BAKO: Blast-Assisted Knowledge Organizer for Targeted CDS Extraction
 
-**Release file:** `BAKO_V2.py`  
-**Interface:** PyQt6 desktop GUI  
-**Scope:** Gene-of-interest extraction from genome FASTA using external BLAST TSV results
+BAKO (Blast-Assisted Knowledge Organizer) is a standalone desktop application designed for the reproducible extraction of coding sequences (CDSs) corresponding to a gene of interest from bacterial genome assemblies. The tool integrates external sequence similarity results with de novo gene prediction to enable precise localization and standardized retrieval of homologous loci across genomes.
 
----
+Overview and Design Principles
 
-## What BAKO is
+BAKO operates under a modular design in which sequence similarity search is decoupled from downstream genomic interpretation. Specifically, the tool does not perform sequence alignment internally but instead consumes precomputed BLAST tabular outputs (outfmt 6). This separation ensures flexibility in upstream analysis while maintaining strict control over downstream processing and filtering.
 
-BAKO is a **standalone desktop application** that organizes and extracts the **best matching coding sequence (CDS)** for a gene of interest from bacterial genomes.
+The core functionality of BAKO consists of three stages: (i) CDS prediction, (ii) mapping of BLAST hits to genomic features, and (iii) application of explicit filtering and classification criteria. All steps are deterministic and logged to ensure reproducibility.
 
-It is designed to:
-- take a **genome FASTA**
-- take a **BLAST tabular output (outfmt 6) produced elsewhere**
-- predict CDSs using **Prodigal**
-- map BLAST hits onto predicted CDSs
-- apply strict, explicit filtering
-- output reproducible FASTA and TSV summaries
+CDS Prediction and Caching
 
-BAKO is **not a BLAST pipeline** and **does not run BLAST**.  
-It consumes BLAST results you already generated.
+Coding sequences are predicted from input genome FASTA files using Prodigal (Hyatt et al., 2010), with support for both single-genome and metagenomic modes. For each predicted CDS, genomic coordinates, strand orientation, nucleotide sequence, amino acid sequence, and Prodigal completeness flags are retained.
 
----
+To avoid redundant computation, CDS predictions are cached using a SHA256 hash of the input FASTA file. Cached results are reused across runs, ensuring both computational efficiency and reproducibility. The cache additionally records Prodigal version and execution parameters to maintain provenance.
 
-## What BAKO does (exactly)
+BLAST Parsing and Hit Selection
 
-For a single run, BAKO performs the following steps:
+BAKO parses BLAST tabular outputs (outfmt 6) using a robust column-detection strategy that supports both standard and annotated BLAST outputs. For each subject sequence (i.e., genome contig), only the highest-scoring alignment is retained, prioritizing bit score and alignment length.
 
-1. **Parse genome FASTA**
-   - Reads contig headers and sequences
-   - Optionally parses metadata directly from FASTA headers
+Subject identifiers are normalized to ensure compatibility between BLAST outputs and genome FASTA headers. This includes handling of common identifier formats (e.g., lcl|, ref|, and composite identifiers) and removal of coordinate suffixes when present.
 
-2. **Predict CDS features using Prodigal**
-   - User-selectable mode:
-     - `single` (complete genomes)
-     - `meta` (fragmented assemblies)
-   - Extracts:
-     - CDS coordinates
-     - strand
-     - nucleotide sequence
-     - amino-acid sequence
-     - Prodigal completeness flag (`partial=`)
+Mapping of BLAST Hits to CDS Features
 
-3. **Cache CDS predictions**
-   - CDS results are cached using a SHA256 hash of the FASTA
-   - Prevents unnecessary re-running of Prodigal
-   - Cache is persistent across runs
+BLAST hits are mapped onto predicted CDSs based on genomic coordinates. For each alignment, all overlapping CDSs are evaluated, and the CDS with the maximum overlap is selected. Strand concordance between the BLAST hit and CDS is strongly prioritized to ensure biologically consistent assignments.
 
-4. **Parse BLAST TSV (outfmt 6)**
-   - Robust tab-delimited parsing
-   - Handles Windows CRLF safely
-   - Retains the **best hit per subject** (by bitscore)
+If no overlapping CDS is identified, the hit is classified accordingly and retained in diagnostic logs.
 
-5. **Map BLAST hits to CDSs**
-   - BLAST subject IDs are normalized to match FASTA/Prodigal contigs
-   - For each hit:
-     - CDS overlap is computed
-     - strand consistency is prioritized
-     - the CDS with the **maximum overlap** is selected
+Filtering and Classification
 
-6. **Apply filters**
-   - CDS length (nt):
-     - minimum
-     - maximum
-   - Query coverage (%), optional
-   - Filters are explicit and logged
+BAKO applies explicit and user-defined filtering criteria to ensure high-confidence sequence extraction. These include:
 
-7. **Classify CDSs**
-   - `COMPLETE` → Prodigal `partial=00`
-   - `INCOMPLETE` → any other `partial` flag
-   - Filtered hits are separated but retained in logs
+CDS length constraints (minimum and optional maximum, in nucleotides)
+Query coverage thresholds, derived either from BLAST-reported coverage (qcovs) or computed from alignment length and query length (qlen)
 
-8. **Write structured outputs**
-   - FASTA files (nt + aa)
-   - TSV summaries
-   - Full decision log
-   - Machine-readable run metadata
+Each CDS is further classified based on Prodigal completeness flags:
 
----
+COMPLETE: full-length CDS (partial=00)
+INCOMPLETE: truncated or partial CDS
 
-## What BAKO does NOT do
+Filtered sequences are excluded from primary outputs but retained in separate summaries to ensure transparency.
 
-- Does **not** run BLAST
-- Does **not** assemble genomes
-- Does **not** annotate entire genomes
-- Does **not** upload data anywhere
-- Does **not** require BLAST executables to be installed
+Metadata Enrichment (Optional)
 
----
+BAKO supports optional enrichment of sequence metadata through two complementary approaches:
 
-## Required inputs
+NCBI-based enrichment, using Entrez E-utilities to retrieve organismal and replicon information (e.g., chromosome, plasmid, phage), with built-in caching and rate-limit handling.
+Header-based inference, which extracts taxonomic and replicon information directly from FASTA headers.
 
-### 1. Genome FASTA
-Accepted extensions:
-- `.fa`, `.fasta`, `.fna`
+These annotations enable downstream stratification of results and facilitate comparative analyses across genomic contexts.
 
-Requirements:
-- Valid FASTA format
-- Contig IDs must match those used when generating the BLAST TSV
+Output Structure and Reproducibility
 
-### 2. BLAST TSV (outfmt 6)
-Produced externally by the user.
+BAKO produces a structured set of outputs organized into distinct categories:
 
-Required fields:
-- `qaccver`
-- `saccver`
-- `pident`
-- `length`
-- `sstart`
-- `send`
-- `evalue`
-- `bitscore`
+FASTA files of extracted CDSs (nucleotide and amino acid sequences)
+Tabular summaries for complete and incomplete CDSs
+Comprehensive per-hit logs detailing mapping decisions, overlap metrics, and filtering outcomes
+Filtered result summaries
+A machine-readable metadata file (RUN_INFO.json) containing all run parameters and cache provenance
 
-Optional fields:
-- `qcovs`
-- `qlen`
+Optionally, outputs can be further partitioned by replicon type (e.g., chromosome, plasmid, phage), enabling stratified analyses.
 
-If `qcovs` or `qlen` are absent, query coverage filtering cannot be applied.
+All outputs are deterministically ordered and generated using atomic write operations to ensure data integrity.
 
----
+Implementation
 
-## Output structure
+BAKO is implemented in Python (version ≥3.9) with a PyQt6-based graphical user interface for cross-platform usability. External dependencies are limited to Prodigal for gene prediction. The application is designed to operate locally without reliance on cloud services or external pipelines.
 
-```
-<PREFIX>_OUTPUT/
-├── COMPLETE/
-├── INCOMPLETE/
-├── FILTERED/
-├── SUMMARY_COMPLETE.tsv
-├── SUMMARY_INCOMPLETE.tsv
-├── CDS_MATCH_LOG.tsv
-├── RUN_INFO.json
-└── README.txt
+Scope and Limitations
+
+BAKO is intended for targeted gene-of-interest extraction and does not perform genome assembly, annotation, or sequence alignment. Its performance depends on the quality of external BLAST results and the consistency between BLAST subject identifiers and genome FASTA headers.
 ```
 GUI
 
